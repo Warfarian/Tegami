@@ -24,7 +24,7 @@ export default function WriteInvite() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) {
-      navigate('/login')
+      alert('Please log in to write a letter')
       return
     }
     if (isValid) {
@@ -38,7 +38,7 @@ export default function WriteInvite() {
 
   const handleWriteClick = () => {
     if (!user) {
-      navigate('/login')
+      alert('Please log in to write a letter')
       return
     }
     setMode('write')
@@ -46,7 +46,7 @@ export default function WriteInvite() {
 
   const handleReplyClick = () => {
     if (!user) {
-      navigate('/login')
+      alert('Please log in to reply to letters')
       return
     }
     // Future: implement reply functionality

@@ -194,6 +194,41 @@ export default function Dashboard() {
         <div className="letter-paper">
           <h1 className="text-4xl font-script text-ink mb-8 text-center">Your Dashboard</h1>
           
+          {/* Quick Navigation Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Button 
+              asChild
+              variant="outline"
+              className="envelope-card hover:rotate-1 transition-transform duration-300 h-auto p-6"
+            >
+              <Link to="/journal" className="flex flex-col items-center text-center space-y-3">
+                <BookOpen className="w-8 h-8 text-ink-blue" />
+                <div>
+                  <h3 className="font-script text-ink text-xl mb-1">Daily Journal</h3>
+                  <p className="font-handwriting text-ink-blue text-sm">
+                    Capture your thoughts and track your moods
+                  </p>
+                </div>
+              </Link>
+            </Button>
+            
+            <Button 
+              asChild
+              variant="outline"
+              className="envelope-card hover:-rotate-1 transition-transform duration-300 h-auto p-6"
+            >
+              <Link to="/cassette" className="flex flex-col items-center text-center space-y-3">
+                <Mic className="w-8 h-8 text-ink-blue" />
+                <div>
+                  <h3 className="font-script text-ink text-xl mb-1">Voice Vents</h3>
+                  <p className="font-handwriting text-ink-blue text-sm">
+                    Record anonymous audio memories
+                  </p>
+                </div>
+              </Link>
+            </Button>
+          </div>
+          
           <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="w-full">
             <Tabs.List className="flex space-x-1 bg-ink-blue/5 p-1 rounded-lg mb-6">
               <Tabs.Trigger 

@@ -1,7 +1,10 @@
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Index() {
+  const { user } = useAuth()
+  
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden landing-background">
       {/* Vintage decorations */}
@@ -46,27 +49,42 @@ export default function Index() {
         </div>
         
         <div className="mt-8">
-          <Link 
-            to="/login" 
-            className="text-ink-blue hover:text-ink transition-colors font-handwriting text-lg underline"
-          >
-            Sign up or Login
-          </Link>
+          {user ? (
+            <Link 
+              to="/dashboard" 
+              className="text-ink-blue hover:text-ink transition-colors font-handwriting text-lg underline"
+            >
+              Go to Dashboard
+            </Link>
+          ) : (
+            <Link 
+              to="/login" 
+              className="text-ink-blue hover:text-ink transition-colors font-handwriting text-lg underline"
+            >
+              Sign up or Login
+            </Link>
+          )}
         </div>
         
-        <div className="mt-16 flex justify-center space-x-8">
-          <Link 
-            to="/cassette" 
-            className="text-ink-blue hover:text-ink transition-colors font-handwriting text-lg"
+        <div className="mt-16 flex flex-col sm:flex-row justify-center gap-4">
+          <Button 
+            asChild
+            variant="ghost"
+            className="envelope-card hover:rotate-1 transition-transform duration-300 font-handwriting text-lg py-3 px-6"
           >
-Voice Vents
-          </Link>
-          <Link 
-            to="/journal" 
-            className="text-ink-blue hover:text-ink transition-colors font-handwriting text-lg"
+            <Link to="/cassette">
+              📼 Voice Vents
+            </Link>
+          </Button>
+          <Button 
+            asChild
+            variant="ghost"
+            className="envelope-card hover:-rotate-1 transition-transform duration-300 font-handwriting text-lg py-3 px-6"
           >
-Daily Journal
-          </Link>
+            <Link to="/journal">
+              📝 Daily Journal
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

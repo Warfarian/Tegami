@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '../components/ui/button'
-import { Play, Pause, Trash2 } from 'lucide-react'
+import { Play, Pause, Trash2, ArrowLeft } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 import { CASSETTES_STORAGE_KEY, type Cassette } from '../lib/cassette'
 import CassetteTape from '../components/CassetteTape'
 
 export default function CassetteWall() {
+  const { user } = useAuth()
   const [cassettes, setCassettes] = useState<Cassette[]>([])
   const [playingId, setPlayingId] = useState<string | null>(null)
   const audioRefs = useRef<Record<string, HTMLAudioElement>>({})
@@ -112,6 +114,18 @@ export default function CassetteWall() {
     <div className="min-h-screen p-4 pt-12 bg-cover bg-center bg-no-repeat relative" style={{backgroundImage: 'url(/cassette.jpg)'}}>
       <div className="absolute inset-0 bg-white bg-opacity-80"></div>
       <div className="max-w-6xl mx-auto relative z-10">
+        <div className="mb-6">
+          <Button 
+            asChild
+            variant="ghost" 
+            className="font-handwriting text-ink-blue hover:text-ink"
+          >
+            <Link to={user ? "/dashboard" : "/"}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              {user ? "Back to Dashboard" : "Back Home"}
+            </Link>
+          </Button>
+        </div>
         <div className="text-center mb-12">
           <h1 className="text-4xl font-script text-ink mb-4">Audio Memories 📼</h1>
           <p className="font-handwriting text-ink-blue text-lg">

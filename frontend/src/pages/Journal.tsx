@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -9,7 +10,7 @@ import {
 } from '@/lib/journalData'
 import { journalApi, type JournalEntry } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
-import { PenTool, BookOpen, BarChart3, Trash2, Plus, Calendar, Tag, Smile, Zap, Heart, Leaf, Check, Minus, Moon, AlertTriangle, CloudRain, X, Layers } from 'lucide-react'
+import { PenTool, BookOpen, BarChart3, Trash2, Plus, Calendar, Tag, Smile, Zap, Heart, Leaf, Check, Minus, Moon, AlertTriangle, CloudRain, X, Layers, ArrowLeft } from 'lucide-react'
 
 export default function Journal() {
   const { user } = useAuth()
@@ -131,6 +132,18 @@ export default function Journal() {
     <div className="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat relative" style={{backgroundImage: 'url(/books.JPG)'}}>
       <div className="absolute inset-0 bg-white bg-opacity-60"></div>
       <div className="letter-paper max-w-4xl w-full mx-4 relative z-10">
+        <div className="mb-6 flex justify-between items-center">
+          <Button 
+            asChild
+            variant="ghost" 
+            className="font-handwriting text-ink-blue hover:text-ink"
+          >
+            <Link to={user ? "/dashboard" : "/"}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              {user ? "Back to Dashboard" : "Back Home"}
+            </Link>
+          </Button>
+        </div>
         <h1 className="text-3xl font-script text-ink mb-6 text-center">Daily Journal</h1>
         
         <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="w-full">
