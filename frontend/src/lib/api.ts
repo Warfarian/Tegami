@@ -73,6 +73,14 @@ export const lettersApi = {
     return response.json()
   },
 
+  getUserLetter: async (userId: string): Promise<Letter | null> => {
+    const headers = await getAuthHeaders()
+    const response = await fetch(`${API_BASE_URL}/letters/user/${userId}`, { headers })
+    if (response.status === 404) return null
+    if (!response.ok) throw new Error('Failed to fetch user letter')
+    return response.json()
+  },
+
   create: async (letter: Omit<Letter, 'id' | 'created_at' | 'author_name'>): Promise<Letter> => {
     const headers = await getAuthHeaders()
     const response = await fetch(`${API_BASE_URL}/letters`, {
@@ -81,6 +89,17 @@ export const lettersApi = {
       body: JSON.stringify(letter)
     })
     if (!response.ok) throw new Error('Failed to create letter')
+    return response.json()
+  },
+
+  update: async (id: string, letter: Omit<Letter, 'id' | 'created_at' | 'author_name'>): Promise<Letter> => {
+    const headers = await getAuthHeaders()
+    const response = await fetch(`${API_BASE_URL}/letters/${id}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(letter)
+    })
+    if (!response.ok) throw new Error('Failed to update letter')
     return response.json()
   }
 }
@@ -124,6 +143,22 @@ export const penpalsApi = {
     return response.json()
   },
 
+  createConnection: async (user1_id: string, user2_id: string): Promise<Penpal> => {
+    const headers = await getAuthHeaders()
+    const response = await fetch(`${API_BASE_URL}/penpals`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ user1_id, user2_id })
+    })
+    if (!response.ok) {
+      if (response.status === 409) {
+        throw new Error('Penpal connection already exists')
+      }
+      throw new Error('Failed to create penpal connection')
+    }
+    return response.json()
+  },
+
   getLetters: async (userId: string, type?: 'inbox' | 'outbox'): Promise<PenpalLetter[]> => {
     const headers = await getAuthHeaders()
     const url = type ? `${API_BASE_URL}/penpals/${userId}/letters?type=${type}` : `${API_BASE_URL}/penpals/${userId}/letters`
@@ -141,6 +176,48 @@ export const penpalsApi = {
     })
     if (!response.ok) throw new Error('Failed to send letter')
     return response.json()
+  },
+
+  acceptRequest: async (requestId: string, userId: string): Promise<Penpal> => {
+    const headers = await getAuthHeaders()
+    const response = await fetch(`${API_BASE_URL}/penpals/${requestId}/accept`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ userId })
+    })
+    if (!response.ok) throw new Error('Failed to accept penpal request')
+    return response.json()
+  },
+
+  getRequests: async (userId: string): Promise<Penpal[]> => {
+    const headers = await getAuthHeaders()
+    const response = await fetch(`${API_BASE_URL}/penpals/${userId}/requests`, { headers })
+    if (!response.ok) throw new Error('Failed to fetch penpal requests')
+    return response.json()
+  },
+
+  getRequestWithLetter: async (requestId: string): Promise<{ request: Penpal; letter: Letter | null }> => {
+    const headers = await getAuthHeaders()
+    const response = await fetch(`${API_BASE_URL}/penpals/request/${requestId}/details`, { headers })
+    if (!response.ok) throw new Error('Failed to fetch request details')
+    return response.json()
+  }
+}
+
+// Users API
+export const usersApi = {
+  getProfileById: async (userId: string): Promise<{ full_name: string; country: string } | null> => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('full_name, country')
+      .eq('id', userId)
+      .single()
+    
+    if (error) {
+      console.error('Error fetching profile:', error)
+      return null
+    }
+    return data
   }
 }
 

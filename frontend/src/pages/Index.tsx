@@ -23,13 +23,13 @@ export default function Index() {
           Tegami
         </h1>
         
-        <p className="text-2xl md:text-3xl font-handwriting text-ink-blue mb-8">
-          Strangers today. Penpals tomorrow.
+        <p className="text-2xl md:text-2xl font-handwriting text-ink-blue mb-8">
+          Strangers today. Penpals tomorrow. <br />Friends Forever.
         </p>
         
         <p className="text-lg text-ink-blue/80 max-w-lg mx-auto mb-12">
-          A digital penpal platform that feels analog, warm, and nostalgic. 
-          Experience the art of delayed messaging and meaningful connections.
+          Rediscover the lost art of writing letters and creating meaningful connections again.  <br />
+          A digital penpal platform where you can write letters, record audios and journal your life while making friends around the world. 
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button 

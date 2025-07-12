@@ -4,13 +4,16 @@ import { AudioVisualizer, LiveAudioVisualizer } from 'react-audio-visualize'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Mic, Square, Play, Pause, RotateCcw } from 'lucide-react'
-import { CASSETTES_STORAGE_KEY, type Cassette } from '../lib/cassette'
+import { audioApi } from '../lib/api'
+import { useAuth } from '../contexts/AuthContext'
 import CassetteTape from '../components/CassetteTape'
 
 export default function RecordCassette() {
+  const { user } = useAuth()
   const [selectedMood, setSelectedMood] = useState<string>('')
   const [isPlaying, setIsPlaying] = useState(false)
   const [recordingTitle, setRecordingTitle] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
   const [blob, setBlob] = useState<Blob | null>(null)
 
@@ -45,35 +48,50 @@ export default function RecordCassette() {
     }
   }
 
-  const handleSaveVent = () => {
-    if (!selectedMood || !mediaBlobUrl || !recordingTitle.trim()) {
+  const handleSaveVent = async () => {
+    if (!selectedMood || !blob || !recordingTitle.trim() || !user) {
       alert('Please select a mood, add a title, and record your vent first!')
       return
     }
 
-    // Create cassette object
-    const cassette: Cassette = {
-      id: Date.now().toString(),
-      title: recordingTitle,
-      mood: selectedMood,
-      audioUrl: mediaBlobUrl,
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+    setIsSaving(true)
+    try {
+      // Create FormData for file upload
+      const formData = new FormData()
+      formData.append('audio', blob, `recording-${Date.now()}.webm`)
+      formData.append('user_id', user.id)
+      formData.append('title', recordingTitle)
+      formData.append('description', selectedMood)
+      
+      // Calculate duration if possible
+      if (audioRef.current?.duration) {
+        formData.append('duration', Math.round(audioRef.current.duration).toString())
+      }
+
+      // Upload to backend
+      const response = await fetch('http://localhost:3001/api/audio', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to save audio memory')
+      }
+
+      // Reset form
+      setSelectedMood('')
+      setRecordingTitle('')
+      clearBlobUrl()
+      setBlob(null)
+      setIsPlaying(false)
+
+      alert('Audio memory saved successfully! 📼')
+    } catch (error) {
+      console.error('Error saving audio memory:', error)
+      alert('Failed to save audio memory. Please try again.')
+    } finally {
+      setIsSaving(false)
     }
-
-    // Save to localStorage (in real app, would save to Supabase)
-    const existingCassettes = JSON.parse(localStorage.getItem(CASSETTES_STORAGE_KEY) || '[]')
-    existingCassettes.push(cassette)
-    localStorage.setItem(CASSETTES_STORAGE_KEY, JSON.stringify(existingCassettes))
-
-    // Reset form
-    setSelectedMood('')
-    setRecordingTitle('')
-    clearBlobUrl()
-    setBlob(null)
-    setIsPlaying(false)
-
-    alert('Audio memory saved! It will be available on the wall for 24 hours.')
   }
 
   const handleReset = () => {
@@ -228,12 +246,12 @@ export default function RecordCassette() {
             <Button
               onClick={handleSaveVent}
               className="bg-ink hover:bg-ink-dark text-paper px-8 py-3 text-lg font-handwriting shadow-lg hover:shadow-xl transition-all"
-              disabled={!selectedMood || !recordingTitle.trim()}
+              disabled={!selectedMood || !recordingTitle.trim() || isSaving}
             >
-              Save to Audio Memories 📼
+              {isSaving ? 'Saving...' : 'Save to Audio Memories 📼'}
             </Button>
             <p className="text-sm text-ink-light mt-2 font-handwriting">
-              Your memory will be available for 24 hours
+              Your memory will be saved permanently
             </p>
             
             {/* Decorative elements */}
