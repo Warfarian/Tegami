@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -12,9 +12,11 @@ import {
   type Penpal,
   type PenpalLetter 
 } from '@/lib/mockData'
-import { Inbox, Send, Users, PenTool, Clock, CheckCircle, ArrowLeft } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { Inbox, Send, Users, PenTool, Clock, CheckCircle, ArrowLeft, LogOut } from 'lucide-react'
 
 export default function Dashboard() {
+  const { user, signOut, loading } = useAuth()
   const [penpals, setPenpals] = useState<Penpal[]>([])
   const [inboxLetters, setInboxLetters] = useState<PenpalLetter[]>([])
   const [outboxLetters, setOutboxLetters] = useState<PenpalLetter[]>([])
@@ -59,10 +61,32 @@ export default function Dashboard() {
     }
   }
 
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center letter-writing-background">
+        <div className="letter-paper max-w-md w-full mx-4">
+          <p className="font-handwriting text-ink-blue text-center">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
   return (
     <div className="min-h-screen py-8 px-4 letter-writing-background">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-6">
+        <div className="mb-6 flex justify-between items-center">
           <Button 
             asChild
             variant="ghost" 
@@ -73,6 +97,20 @@ export default function Dashboard() {
               Back Home
             </Link>
           </Button>
+          
+          <div className="flex items-center gap-4">
+            <span className="font-handwriting text-ink-blue">
+              Welcome, {user.email}
+            </span>
+            <Button 
+              variant="ghost"
+              onClick={handleSignOut}
+              className="font-handwriting text-ink-blue hover:text-ink"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
 
         <div className="letter-paper">

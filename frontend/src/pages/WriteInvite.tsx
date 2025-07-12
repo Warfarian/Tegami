@@ -1,13 +1,16 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getLetters, addLetter, countries, ageRanges, writingStyles, type Letter } from '@/lib/mockData'
-import { ArrowLeft, Send, Eye } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { ArrowLeft, Send, Eye, Lock } from 'lucide-react'
 
 export default function WriteInvite() {
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [mode, setMode] = useState<'browse' | 'write'>('browse')
   const [formData, setFormData] = useState<Omit<Letter, 'id' | 'timestamp' | 'author'>>({
     content: '',
@@ -20,6 +23,10 @@ export default function WriteInvite() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (!user) {
+      navigate('/login')
+      return
+    }
     if (isValid) {
       const newLetter = addLetter(formData)
       setLetters(prevLetters => [newLetter, ...prevLetters])
@@ -27,6 +34,23 @@ export default function WriteInvite() {
       setShowPreview(false)
       setMode('browse')
     }
+  }
+
+  const handleWriteClick = () => {
+    if (!user) {
+      navigate('/login')
+      return
+    }
+    setMode('write')
+  }
+
+  const handleReplyClick = () => {
+    if (!user) {
+      navigate('/login')
+      return
+    }
+    // Future: implement reply functionality
+    alert('Reply functionality coming soon!')
   }
 
   const characterCount = formData.content.length
@@ -181,9 +205,10 @@ export default function WriteInvite() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
-              onClick={() => setMode('write')}
+              onClick={handleWriteClick}
               className="envelope-card hover:rotate-1 transition-transform duration-300 text-lg py-6 px-8"
             >
+              {!user && <Lock className="w-4 h-4 mr-2" />}
               Write Your Letter
             </Button>
             
@@ -197,36 +222,57 @@ export default function WriteInvite() {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
           {letters.map((letter) => (
-            <div key={letter.id} className="envelope-card hover:rotate-1 transition-transform duration-300">
-              <div className="flex flex-wrap gap-2 mb-3">
-                <span className="px-2 py-1 bg-ink-blue/10 text-ink-blue rounded-full text-xs font-handwriting">
-                  📍 {letter.country}
-                </span>
-                <span className="px-2 py-1 bg-ink-blue/10 text-ink-blue rounded-full text-xs font-handwriting">
-                  🎂 {letter.age}
-                </span>
-                <span className="px-2 py-1 bg-ink-blue/10 text-ink-blue rounded-full text-xs font-handwriting">
-                  ✍️ {letter.writingStyle}
-                </span>
+            <div key={letter.id} className="letter-card hover:rotate-1 transition-transform duration-300">
+              {/* Letter Header */}
+              <div className="letter-header mb-6">
+                <div className="flex justify-between items-start mb-2">
+                  <div className="letter-address">
+                    <div className="text-sm font-handwriting text-ink-blue/70 mb-1">
+                      From: A Friend in {letter.country}
+                    </div>
+                    <div className="text-xs font-handwriting text-ink-blue/50">
+                      {letter.timestamp.toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className="postage-stamp">
+                    <div className="stamp-inner">
+                      <div className="text-xs font-handwriting text-white">{letter.age}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Letter greeting */}
+                <div className="letter-greeting mt-4 mb-4">
+                  <p className="font-handwriting text-ink text-lg">Dear Future Penpal,</p>
+                </div>
               </div>
               
-              <p className="font-handwriting text-ink leading-relaxed mb-4 line-clamp-4">
-                {letter.content}
-              </p>
+              {/* Letter content */}
+              <div className="letter-content mb-6">
+                <p className="font-handwriting text-ink leading-relaxed text-base letter-text">
+                  {letter.content}
+                </p>
+              </div>
               
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-ink-blue/60 font-handwriting">
-                  {letter.timestamp.toLocaleDateString()}
-                </span>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  className="hover:rotate-1 transition-transform duration-300"
-                >
-                  Reply
-                </Button>
+              {/* Letter footer */}
+              <div className="letter-footer">
+                <div className="flex justify-between items-end">
+                  <div className="letter-signature">
+                    <p className="font-handwriting text-ink text-sm mb-1">Warmly,</p>
+                    <p className="font-script text-ink text-lg">A {letter.writingStyle} Writer</p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={handleReplyClick}
+                    className="letter-reply-btn hover:rotate-1 transition-transform duration-300"
+                  >
+                    {!user && <Lock className="w-4 h-4 mr-2" />}
+                    📝 Reply
+                  </Button>
+                </div>
               </div>
             </div>
           ))}
