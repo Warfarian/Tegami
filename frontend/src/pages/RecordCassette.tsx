@@ -73,7 +73,7 @@ export default function RecordCassette() {
     setBlob(null)
     setIsPlaying(false)
 
-    alert('Voice vent saved! It will be available on the cassette wall for 24 hours.')
+    alert('Audio memory saved! It will be available on the wall for 24 hours.')
   }
 
   const handleReset = () => {
@@ -84,9 +84,10 @@ export default function RecordCassette() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="letter-paper max-w-2xl w-full">
-        <h1 className="text-3xl font-script text-ink mb-6 text-center">Record Your Vent 📼</h1>
+    <div className="min-h-screen flex items-center justify-center p-4 pt-12 bg-cover bg-center bg-no-repeat relative" style={{backgroundImage: 'url(/cassette.jpg)'}}>
+      <div className="absolute inset-0 bg-white bg-opacity-80"></div>
+      <div className="letter-paper max-w-2xl w-full relative z-10">
+        <h1 className="text-3xl font-script text-ink mb-6 text-center">Record Your Memory 📼</h1>
         
         {/* Cassette Tape Visual */}
         <div className="mb-8 flex justify-center">
@@ -104,7 +105,7 @@ export default function RecordCassette() {
 
         {/* Title Input */}
         <div className="mb-6">
-          <label className="block font-handwriting text-ink mb-2">Give your vent a title:</label>
+          <label className="block font-handwriting text-ink mb-2">Give your recording a title:</label>
           <input
             type="text"
             value={recordingTitle}
@@ -226,14 +227,23 @@ export default function RecordCassette() {
           <div className="text-center">
             <Button
               onClick={handleSaveVent}
-              className="bg-ink hover:bg-ink-dark text-paper px-8 py-3 text-lg font-handwriting"
+              className="bg-ink hover:bg-ink-dark text-paper px-8 py-3 text-lg font-handwriting shadow-lg hover:shadow-xl transition-all"
               disabled={!selectedMood || !recordingTitle.trim()}
             >
-              Save to Cassette Wall 📼
+              Save to Audio Memories 📼
             </Button>
             <p className="text-sm text-ink-light mt-2 font-handwriting">
-              Your vent will be available for 24 hours
+              Your memory will be available for 24 hours
             </p>
+            
+            {/* Decorative elements */}
+            <div className="mt-6 flex justify-center items-center gap-3 opacity-40">
+              <span className="text-ink text-lg">♪</span>
+              <div className="w-12 h-0.5 bg-ink-light"></div>
+              <span className="text-ink text-lg">♫</span>
+              <div className="w-12 h-0.5 bg-ink-light"></div>
+              <span className="text-ink text-lg">♪</span>
+            </div>
           </div>
         )}
       </div>
