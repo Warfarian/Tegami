@@ -5,16 +5,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input'
 import * as Tabs from '@radix-ui/react-tabs'
 import { 
-  getJournalEntries, 
-  addJournalEntry, 
-  deleteJournalEntry,
-  getMoodStats,
-  MOOD_OPTIONS,
-  type JournalEntry 
+  MOOD_OPTIONS
 } from '@/lib/journalData'
+import { journalApi, type JournalEntry } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
 import { PenTool, BookOpen, BarChart3, Trash2, Plus, Calendar, Tag, Smile, Zap, Heart, Leaf, Check, Minus, Moon, AlertTriangle, CloudRain, X, Layers } from 'lucide-react'
 
 export default function Journal() {
+  const { user } = useAuth()
   const [entries, setEntries] = useState<JournalEntry[]>([])
   const [activeTab, setActiveTab] = useState('write')
   const [title, setTitle] = useState('')
@@ -22,40 +20,77 @@ export default function Journal() {
   const [selectedMood, setSelectedMood] = useState('')
   const [moodIntensity, setMoodIntensity] = useState(3)
   const [tags, setTags] = useState('')
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    setEntries(getJournalEntries())
-  }, [])
+    if (user) {
+      loadJournalEntries()
+    }
+  }, [user])
 
-  const handleSaveEntry = () => {
-    if (!title.trim() || !content.trim() || !selectedMood) return
+  const loadJournalEntries = async () => {
+    if (!user) return
+    try {
+      setLoading(true)
+      const data = await journalApi.getByUserId(user.id)
+      setEntries(data.map(entry => ({
+        ...entry,
+        timestamp: new Date(entry.created_at)
+      })))
+    } catch (error) {
+      console.error('Error loading journal entries:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSaveEntry = async () => {
+    if (!title.trim() || !content.trim() || !selectedMood || !user) return
 
     const tagArray = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
     
-    const newEntry = addJournalEntry({
-      title: title.trim(),
-      content: content.trim(),
-      mood: selectedMood,
-      moodIntensity,
-      tags: tagArray
-    })
+    try {
+      setLoading(true)
+      const newEntry = await journalApi.create({
+        user_id: user.id,
+        title: title.trim(),
+        content: content.trim(),
+        mood: selectedMood,
+        mood_intensity: moodIntensity,
+        tags: tagArray
+      })
 
-    setEntries(prev => [newEntry, ...prev])
-    
-    // Reset form
-    setTitle('')
-    setContent('')
-    setSelectedMood('')
-    setMoodIntensity(3)
-    setTags('')
-    
-    // Switch to entries tab to see the new entry
-    setActiveTab('entries')
+      setEntries(prev => [{
+        ...newEntry,
+        timestamp: new Date(newEntry.created_at)
+      }, ...prev])
+      
+      // Reset form
+      setTitle('')
+      setContent('')
+      setSelectedMood('')
+      setMoodIntensity(3)
+      setTags('')
+      
+      // Switch to entries tab to see the new entry
+      setActiveTab('entries')
+    } catch (error) {
+      console.error('Error saving journal entry:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleDeleteEntry = (id: string) => {
-    deleteJournalEntry(id)
-    setEntries(prev => prev.filter(entry => entry.id !== id))
+  const handleDeleteEntry = async (id: string) => {
+    try {
+      setLoading(true)
+      await journalApi.delete(id)
+      setEntries(prev => prev.filter(entry => entry.id !== id))
+    } catch (error) {
+      console.error('Error deleting journal entry:', error)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getMoodOption = (moodValue: string) => {
@@ -69,6 +104,25 @@ export default function Journal() {
       month: 'long', 
       day: 'numeric' 
     })
+  }
+
+  const getMoodStats = () => {
+    const moodCounts: Record<string, number> = {}
+    
+    entries.forEach(entry => {
+      moodCounts[entry.mood] = (moodCounts[entry.mood] || 0) + 1
+    })
+    
+    return Object.entries(moodCounts)
+      .map(([mood, count]) => {
+        const moodOption = MOOD_OPTIONS.find(option => option.value === mood)
+        return {
+          mood,
+          count,
+          emoji: moodOption?.emoji || 'Minus'
+        }
+      })
+      .sort((a, b) => b.count - a.count)
   }
 
   const moodStats = getMoodStats()
@@ -185,11 +239,11 @@ Mood Stats
 
               <Button 
                 onClick={handleSaveEntry}
-                disabled={!title.trim() || !content.trim() || !selectedMood}
+                disabled={!title.trim() || !content.trim() || !selectedMood || loading}
                 className="w-full bg-ink hover:bg-ink-dark text-paper font-handwriting text-lg py-3"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Save Journal Entry
+                {loading ? 'Saving...' : 'Save Journal Entry'}
               </Button>
             </div>
           </Tabs.Content>

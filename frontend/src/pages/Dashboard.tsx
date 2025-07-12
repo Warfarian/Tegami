@@ -4,16 +4,9 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import * as Tabs from '@radix-ui/react-tabs'
-import { 
-  getPenpals, 
-  getInboxLetters, 
-  getOutboxLetters, 
-  sendLetterToPenpal,
-  type Penpal,
-  type PenpalLetter 
-} from '@/lib/mockData'
+import { penpalsApi, type Penpal, type PenpalLetter } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
-import { Inbox, Send, Users, PenTool, Clock, CheckCircle, ArrowLeft, LogOut } from 'lucide-react'
+import { Inbox, Send, Users, PenTool, Clock, CheckCircle, ArrowLeft, LogOut, BookOpen, Mic } from 'lucide-react'
 
 export default function Dashboard() {
   const { user, signOut, loading } = useAuth()
@@ -25,17 +18,78 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('inbox')
 
   useEffect(() => {
-    setPenpals(getPenpals())
-    setInboxLetters(getInboxLetters())
-    setOutboxLetters(getOutboxLetters())
-  }, [])
+    if (user) {
+      loadDashboardData()
+    }
+  }, [user])
 
-  const handleSendLetter = () => {
-    if (letterContent.trim() && selectedPenpal) {
-      const newLetter = sendLetterToPenpal(letterContent, selectedPenpal)
-      setOutboxLetters(prev => [newLetter, ...prev])
+  const loadDashboardData = async () => {
+    if (!user) return
+    try {
+      const [penpalsData, inboxData, outboxData] = await Promise.all([
+        penpalsApi.getByUserId(user.id),
+        penpalsApi.getLetters(user.id, 'inbox'),
+        penpalsApi.getLetters(user.id, 'outbox')
+      ])
+      
+      setPenpals(penpalsData.map(p => ({
+        id: p.id,
+        name: p.user1_id === user.id ? p.user2?.full_name || 'Unknown' : p.user1?.full_name || 'Unknown',
+        country: p.user1_id === user.id ? p.user2?.country || 'Unknown' : p.user1?.country || 'Unknown',
+        age: '25-30', // Default for now
+        writingStyle: p.user1_id === user.id ? p.user2?.writing_style || 'Unknown' : p.user1?.writing_style || 'Unknown',
+        connectedAt: new Date(p.connected_at)
+      })))
+      
+      setInboxLetters(inboxData.map(l => ({
+        id: l.id,
+        content: l.content,
+        fromUser: 'Penpal', // Will need to fetch user names
+        toUser: 'current-user',
+        timestamp: new Date(l.created_at),
+        status: l.status
+      })))
+      
+      setOutboxLetters(outboxData.map(l => ({
+        id: l.id,
+        content: l.content,
+        fromUser: 'current-user',
+        toUser: 'Penpal', // Will need to fetch user names
+        timestamp: new Date(l.created_at),
+        status: l.status
+      })))
+    } catch (error) {
+      console.error('Error loading dashboard data:', error)
+    }
+  }
+
+  const handleSendLetter = async () => {
+    if (!letterContent.trim() || !selectedPenpal || !user) return
+    
+    try {
+      // Find the penpal to get their user ID
+      const penpal = penpals.find(p => p.name === selectedPenpal)
+      if (!penpal) return
+      
+      const newLetter = await penpalsApi.sendLetter({
+        from_user_id: user.id,
+        to_user_id: penpal.id, // This would need proper mapping
+        content: letterContent
+      })
+      
+      setOutboxLetters(prev => [{
+        id: newLetter.id,
+        content: newLetter.content,
+        fromUser: 'current-user',
+        toUser: selectedPenpal,
+        timestamp: new Date(newLetter.created_at),
+        status: newLetter.status
+      }, ...prev])
+      
       setLetterContent('')
       setSelectedPenpal('')
+    } catch (error) {
+      console.error('Error sending letter:', error)
     }
   }
 
@@ -99,6 +153,30 @@ export default function Dashboard() {
           </Button>
           
           <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Button 
+                asChild
+                variant="ghost"
+                size="sm"
+                className="font-handwriting text-ink-blue hover:text-ink"
+              >
+                <Link to="/journal">
+                  <BookOpen className="w-4 h-4 mr-1" />
+                  Journal
+                </Link>
+              </Button>
+              <Button 
+                asChild
+                variant="ghost"
+                size="sm"
+                className="font-handwriting text-ink-blue hover:text-ink"
+              >
+                <Link to="/cassette">
+                  <Mic className="w-4 h-4 mr-1" />
+                  Voice Vents
+                </Link>
+              </Button>
+            </div>
             <span className="font-handwriting text-ink-blue">
               Welcome, {user.email}
             </span>
@@ -123,28 +201,28 @@ export default function Dashboard() {
                 className="flex items-center gap-2 px-4 py-2 rounded-md font-handwriting text-ink-blue data-[state=active]:bg-paper data-[state=active]:text-ink data-[state=active]:shadow-sm transition-all"
               >
                 <Inbox className="w-4 h-4" />
-                📥 Inbox
+Inbox
               </Tabs.Trigger>
               <Tabs.Trigger 
                 value="outbox"
                 className="flex items-center gap-2 px-4 py-2 rounded-md font-handwriting text-ink-blue data-[state=active]:bg-paper data-[state=active]:text-ink data-[state=active]:shadow-sm transition-all"
               >
                 <Send className="w-4 h-4" />
-                📤 Outbox
+Outbox
               </Tabs.Trigger>
               <Tabs.Trigger 
                 value="penpals"
                 className="flex items-center gap-2 px-4 py-2 rounded-md font-handwriting text-ink-blue data-[state=active]:bg-paper data-[state=active]:text-ink data-[state=active]:shadow-sm transition-all"
               >
                 <Users className="w-4 h-4" />
-                👥 Penpals
+Penpals
               </Tabs.Trigger>
               <Tabs.Trigger 
                 value="write"
                 className="flex items-center gap-2 px-4 py-2 rounded-md font-handwriting text-ink-blue data-[state=active]:bg-paper data-[state=active]:text-ink data-[state=active]:shadow-sm transition-all"
               >
                 <PenTool className="w-4 h-4" />
-                ✍️ Write Letter
+Write Letter
               </Tabs.Trigger>
             </Tabs.List>
 
@@ -235,13 +313,13 @@ export default function Dashboard() {
                       </div>
                       <div className="flex flex-wrap gap-2 mb-3">
                         <span className="px-2 py-1 bg-ink-blue/10 text-ink-blue rounded-full text-xs font-handwriting">
-                          📍 {penpal.country}
+                          {penpal.country}
                         </span>
                         <span className="px-2 py-1 bg-ink-blue/10 text-ink-blue rounded-full text-xs font-handwriting">
-                          🎂 {penpal.age}
+                          {penpal.age}
                         </span>
                         <span className="px-2 py-1 bg-ink-blue/10 text-ink-blue rounded-full text-xs font-handwriting">
-                          ✍️ {penpal.writingStyle}
+                          {penpal.writingStyle}
                         </span>
                       </div>
                       <p className="text-xs text-ink-blue/60 font-handwriting">

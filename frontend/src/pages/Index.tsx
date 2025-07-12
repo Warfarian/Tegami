@@ -45,18 +45,27 @@ export default function Index() {
           </Button>
         </div>
         
+        <div className="mt-8">
+          <Link 
+            to="/login" 
+            className="text-ink-blue hover:text-ink transition-colors font-handwriting text-lg underline"
+          >
+            Sign up or Login
+          </Link>
+        </div>
+        
         <div className="mt-16 flex justify-center space-x-8">
           <Link 
             to="/cassette" 
             className="text-ink-blue hover:text-ink transition-colors font-handwriting text-lg"
           >
-            Voice Vents 📼
+Voice Vents
           </Link>
           <Link 
             to="/journal" 
             className="text-ink-blue hover:text-ink transition-colors font-handwriting text-lg"
           >
-            Daily Journal ✍️
+Daily Journal
           </Link>
         </div>
       </div>
